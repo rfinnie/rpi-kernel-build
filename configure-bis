@@ -1,0 +1,40 @@
+# As of 2020-03-15, this matches what sakaki- is doing with
+# bcm2711-kernel-bis, and is compatible with both rpi-4.19.y
+# and rpi-5.4.y.
+
+scripts/config \
+  --enable CONFIG_BINFMT_MISC \
+  --enable CONFIG_ZSWAP \
+  --enable CONFIG_ZPOOL \
+  --enable CONFIG_ZBUD \
+  --enable CONFIG_Z3FOLD \
+  --enable CONFIG_ZSMALLOC \
+  --module CONFIG_IP_SET_HASH_IPMARK \
+  --module CONFIG_IP_SET_HASH_MAC \
+  --module CONFIG_IP_SET_HASH_NETPORTNET \
+  --module CONFIG_IP_SET_HASH_NETNET \
+  --disable CONFIG_NF_TABLES_ARP \
+  --disable CONFIG_NF_TABLES_BRIDGE \
+  --enable CONFIG_CGROUP_NET_PRIO \
+  --module CONFIG_CEPH_LIB \
+  --module CONFIG_BLK_DEV_RBD \
+  --enable CONFIG_DRM_VC4_HDMI_CEC \
+  --set-val CONFIG_SND_HDA_PREALLOC_SIZE 2048 \
+  --enable CONFIG_BTRFS_FS \
+  --enable CONFIG_BTRFS_FS_REF_VERIFY \
+  --enable CONFIG_SQUASHFS \
+  --module CONFIG_CEPH_FS \
+  --enable CONFIG_CEPH_FSCACHE \
+  --enable CONFIG_CEPH_FS_POSIX_ACL \
+  --enable CONFIG_KEY_DH_OPERATIONS \
+  --enable CONFIG_XOR_BLOCKS \
+  --enable CONFIG_CRYPTO_KPP \
+  --enable CONFIG_CRYPTO_DH \
+  --enable CONFIG_CRYPTO_LZO \
+  --enable CONFIG_RAID6_PQ \
+  --enable CONFIG_XXHASH \
+  --enable CONFIG_ZLIB_DEFLATE \
+  --enable CONFIG_LZO_COMPRESS \
+  --enable CONFIG_ZSTD_COMPRESS \
+  --enable CONFIG_ZSTD_DECOMPRESS \
+  --disable CONFIG_STRICT_DEVMEM

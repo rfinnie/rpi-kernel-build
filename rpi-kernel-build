@@ -1,0 +1,103 @@
+#!/bin/sh
+
+# rpi-kernel-build
+# Copyright (C) 2020 Ryan Finnie
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301, USA.
+
+set -e
+
+script_dir="$(dirname "$(readlink -f "$0")")"
+if [ -e "${script_dir}/rpi-kernel-build.rc" ]; then
+  . "${script_dir}/rpi-kernel-build.rc"
+fi
+
+while getopts b f; do
+  case $f in
+    b) IS_BIS=1 ;;
+  esac
+done
+shift `expr $OPTIND - 1`
+
+[ -n "${GIT_CHECKOUT}" ] || GIT_CHECKOUT="${script_dir}/linux"
+[ -n "${GIT_REMOTE}" ] || GIT_REMOTE="origin"
+[ -n "${GIT_BRANCH}" ] || GIT_BRANCH="rpi-4.19.y"
+[ -n "${IMAGE_DIR}" ] || IMAGE_DIR="${script_dir}/images"
+[ -n "${CROSS_COMPILE}" ] || CROSS_COMPILE=""
+[ -n "${DEFCONFIG}" ] || DEFCONFIG="bcm2711_defconfig"
+[ -n "${JOBS}" ] || JOBS=4
+[ -n "${IS_BIS}" ] || IS_BIS=0
+
+cd "${GIT_CHECKOUT}"
+
+echo "Cleaning and updating repository"
+make distclean ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" || true
+rm -f .config.defconfig
+git reset --hard
+git fetch "${GIT_REMOTE}" "${GIT_BRANCH}"
+git checkout "${GIT_REMOTE}/${GIT_BRANCH}"
+make distclean ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" || true
+git_rev="$(git log -n1 --format="%h")"
+git_date="$(git show -s --format=%ci "${git_rev}" | perl -ne '/^(\d{4})-(\d{2})-(\d{2})/ && print $1 . $2 . $3')"
+extra_version="-g${git_rev}-${git_date}-p4"
+if [ "$IS_BIS" = 1 ]; then
+  extra_version="${extra_version}-bis"
+fi
+
+echo "Configuring"
+make EXTRAVERSION="${extra_version}" ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" distclean || true
+make EXTRAVERSION="${extra_version}" ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" "${DEFCONFIG}"
+scripts/config --set-str CONFIG_LOCALVERSION ""
+if [ "$IS_BIS" = 1 ]; then
+  echo "Applying -bis changes"
+  cp .config .config.defconfig
+  . "${script_dir}/configure-bis"
+fi
+make EXTRAVERSION="${extra_version}" ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" olddefconfig
+
+echo "Compiling"
+make EXTRAVERSION="${extra_version}" ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" -j${JOBS}
+
+echo "Assembling tarball"
+assemble_dir="$(mktemp -d)"
+mkdir -p "${assemble_dir}" "${assemble_dir}/boot" "${assemble_dir}/boot/overlays"
+make EXTRAVERSION="${extra_version}" ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" INSTALL_MOD_PATH="${assemble_dir}" modules_install
+rm -f "${assemble_dir}/lib/modules"/*/source "${assemble_dir}/lib/modules"/*/build
+cp arch/arm64/boot/Image "${assemble_dir}/boot/kernel8-p4.img"
+cp COPYING "${assemble_dir}/boot/COPYING.linux"
+cp .config "${assemble_dir}/boot/config-p4"
+if [ -e .config.defconfig ]; then
+  diff -u .config.defconfig .config >"${assemble_dir}/boot/config-p4-bis.diff" || true
+fi
+xz -9 -c <Module.symvers >"${assemble_dir}/boot/Module-p4.symvers.xz"
+xz -9 -c <System.map >"${assemble_dir}/boot/System-p4.map.xz"
+cp arch/arm64/boot/dts/broadcom/bcm2711-rpi-4-b.dtb "${assemble_dir}/boot/bcm2711-rpi-4-b.dtb"
+base64 -d <<"EOM" | gunzip -c >"${assemble_dir}/boot/armstub8-gic.bin"
+H4sIAJ1SaF4CA9VQsUoDQRScu93iwGYNKQyG3JIfSDojWOwJ/sARSLDJVeInxCpbhPQRey2ChdUV
+QbxKBfUDFt7VW1lrKm1cH1Z+gI0Dj3nz5hXD4O3epUAVocyjBJUp9ymT1gHRjSlbBIkx/C7NfJv8
+bOHMdof0LfvMSKzTmxb1gAsI/lNt0mfsmQ4VgNLMXlzW1xjQizTnr8D6SEBNtKDV9OTjKYQ1YJ0A
+miuBnYInYh3/3KyzSGv7ucc20E+e+/gDbI2+jn/rK87WjTFOpdlw5mEBmxvuI5Nm6Q9srnn3KbNE
+dYh4Ce6GMzag8J6d6rvHEIYPYlJDzQP+Ib4BWs0hFgACAAA=
+EOM
+cp arch/arm/boot/dts/overlays/README arch/arm/boot/dts/overlays/*.dtbo "${assemble_dir}/boot/overlays/"
+kernel_version="$(make EXTRAVERSION="${extra_version}" ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" kernelversion)"
+mkdir -p "${IMAGE_DIR}"
+tar Jcvf "${IMAGE_DIR}/bcm2711-kernel-${kernel_version}.tar.xz" --owner=root --group=root -C "${assemble_dir}" .
+
+echo "Cleaning"
+rm -rf "${assemble_dir}"
+
+echo "Done"
