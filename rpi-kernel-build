@@ -25,9 +25,11 @@ if [ -e "${script_dir}/rpi-kernel-build.rc" ]; then
   . "${script_dir}/rpi-kernel-build.rc"
 fi
 
-while getopts b f; do
+while getopts bg f; do
   case $f in
     b) IS_BIS=1 ;;
+    g) SKIP_GIT_FETCH=1 ;;
+    *) exit 1 ;;
   esac
 done
 shift `expr $OPTIND - 1`
@@ -40,6 +42,7 @@ shift `expr $OPTIND - 1`
 [ -n "${DEFCONFIG}" ] || DEFCONFIG="bcm2711_defconfig"
 [ -n "${JOBS}" ] || JOBS=4
 [ -n "${IS_BIS}" ] || IS_BIS=0
+[ -n "${SKIP_GIT_FETCH}" ] || SKIP_GIT_FETCH=0
 
 cd "${GIT_CHECKOUT}"
 
@@ -47,7 +50,9 @@ echo "Cleaning and updating repository"
 make distclean ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" || true
 rm -f .config.defconfig
 git reset --hard
-git fetch "${GIT_REMOTE}" "${GIT_BRANCH}"
+if [ "$SKIP_GIT_FETCH" = 0 ]; then
+  git fetch "${GIT_REMOTE}" "${GIT_BRANCH}"
+fi
 git checkout "${GIT_REMOTE}/${GIT_BRANCH}"
 make distclean ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" || true
 git_rev="$(git log -n1 --format="%h")"
