@@ -40,7 +40,7 @@ fi
 [ -n "${BIS}" ] || BIS=0
 [ -n "${GIT_FETCH}" ] || GIT_FETCH=1
 [ -n "${BIS_SCRIPT}" ] || BIS_SCRIPT="${script_dir}/configure-bis"
-[ -n "${SERIES_ID}" ] || EXTRA_REV="p4"
+[ -n "${SERIES_ID}" ] || SERIES_ID="p4"
 [ -n "${EXTRA_REV}" ] || EXTRA_REV=""
 
 cd "${GIT_CHECKOUT}"
