@@ -40,7 +40,6 @@ fi
 [ -n "${BIS}" ] || BIS=0
 [ -n "${GIT_FETCH}" ] || GIT_FETCH=1
 [ -n "${BIS_SCRIPT}" ] || BIS_SCRIPT="${script_dir}/configure-bis"
-[ -n "${SERIES_ID}" ] || SERIES_ID="p4"
 [ -n "${EXTRA_REV}" ] || EXTRA_REV=""
 
 cd "${GIT_CHECKOUT}"
@@ -56,7 +55,7 @@ git checkout "${GIT_REMOTE}/${GIT_BRANCH}"
 make distclean ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" || true
 git_rev="$(git log -n1 --format="%h")"
 git_date="$(git show -s --format=%ci "${git_rev}" | perl -ne '/^(\d{4})-(\d{2})-(\d{2})/ && print $1 . $2 . $3')"
-extra_version="-g${git_rev}-${git_date}${EXTRA_REV}-${SERIES_ID}"
+extra_version="-g${git_rev}-${git_date}${EXTRA_REV}-p4"
 if [ "$BIS" = 1 ]; then
   extra_version="${extra_version}-bis"
 fi
@@ -90,14 +89,14 @@ assemble_dir="$(mktemp -d)"
 mkdir -p "${assemble_dir}" "${assemble_dir}/boot" "${assemble_dir}/boot/overlays"
 make LOCALVERSION="" ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" INSTALL_MOD_PATH="${assemble_dir}" modules_install
 rm -f "${assemble_dir}/lib/modules"/*/source "${assemble_dir}/lib/modules"/*/build
-cp arch/arm64/boot/Image "${assemble_dir}/boot/kernel8-${SERIES_ID}.img"
+cp arch/arm64/boot/Image "${assemble_dir}/boot/kernel8-p4.img"
 cp COPYING "${assemble_dir}/boot/COPYING.linux"
-cp .config "${assemble_dir}/boot/config-${SERIES_ID}"
+cp .config "${assemble_dir}/boot/config-p4"
 if [ -e .config.defconfig ]; then
-  diff -u .config.defconfig .config >"${assemble_dir}/boot/config-${SERIES_ID}-bis.diff" || true
+  diff -u .config.defconfig .config >"${assemble_dir}/boot/config-p4-bis.diff" || true
 fi
-xz -9 -c <Module.symvers >"${assemble_dir}/boot/Module-${SERIES_ID}.symvers.xz"
-xz -9 -c <System.map >"${assemble_dir}/boot/System-${SERIES_ID}.map.xz"
+xz -9 -c <Module.symvers >"${assemble_dir}/boot/Module-p4.symvers.xz"
+xz -9 -c <System.map >"${assemble_dir}/boot/System-p4.map.xz"
 cp arch/arm64/boot/dts/broadcom/bcm2711-rpi-4-b.dtb "${assemble_dir}/boot/bcm2711-rpi-4-b.dtb"
 base64 -d <<"EOM" | gunzip -c >"${assemble_dir}/boot/armstub8-gic.bin"
 H4sIAJ1SaF4CA9VQsUoDQRScu93iwGYNKQyG3JIfSDojWOwJ/sARSLDJVeInxCpbhPQRey2ChdUV
