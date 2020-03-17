@@ -33,7 +33,7 @@ JOBS=16
 
 ## -bis kernels
 
-When run with ```-b```, rpi-kernel-build produces a kernel with some additional config changes.  At the moment, they mirror sakaki-'s  bcm2711-kernel-bis changes.
+When run with environment variable ```BIS=1```, rpi-kernel-build produces a kernel with some additional config changes.  At the moment, they mirror sakaki-'s  bcm2711-kernel-bis changes.
 
 ## Usage
 

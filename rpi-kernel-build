@@ -21,18 +21,14 @@
 set -e
 
 script_dir="$(dirname "$(readlink -f "$0")")"
-if [ -e "${script_dir}/rpi-kernel-build.rc" ]; then
-  . "${script_dir}/rpi-kernel-build.rc"
+if [ -z "${RC_FILE}" ]; then
+  if [ -e "${script_dir}/rpi-kernel-build.rc" ]; then
+    RC_FILE="${script_dir}/rpi-kernel-build.rc"
+  fi
 fi
-
-while getopts bg f; do
-  case $f in
-    b) IS_BIS=1 ;;
-    g) SKIP_GIT_FETCH=1 ;;
-    *) exit 1 ;;
-  esac
-done
-shift `expr $OPTIND - 1`
+if [ -n "${RC_FILE}" ]; then
+  . "${RC_FILE}"
+fi
 
 [ -n "${GIT_CHECKOUT}" ] || GIT_CHECKOUT="${script_dir}/linux"
 [ -n "${GIT_REMOTE}" ] || GIT_REMOTE="origin"
@@ -41,8 +37,11 @@ shift `expr $OPTIND - 1`
 [ -n "${CROSS_COMPILE}" ] || CROSS_COMPILE=""
 [ -n "${DEFCONFIG}" ] || DEFCONFIG="bcm2711_defconfig"
 [ -n "${JOBS}" ] || JOBS=4
-[ -n "${IS_BIS}" ] || IS_BIS=0
-[ -n "${SKIP_GIT_FETCH}" ] || SKIP_GIT_FETCH=0
+[ -n "${BIS}" ] || BIS=0
+[ -n "${GIT_FETCH}" ] || GIT_FETCH=1
+[ -n "${BIS_SCRIPT}" ] || BIS_SCRIPT="${script_dir}/configure-bis"
+[ -n "${SERIES_ID}" ] || EXTRA_REV="p4"
+[ -n "${EXTRA_REV}" ] || EXTRA_REV=""
 
 cd "${GIT_CHECKOUT}"
 
@@ -50,26 +49,31 @@ echo "Cleaning and updating repository"
 make distclean ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" || true
 rm -f .config.defconfig
 git reset --hard
-if [ "$SKIP_GIT_FETCH" = 0 ]; then
+if [ "$GIT_FETCH" = 1 ]; then
   git fetch "${GIT_REMOTE}" "${GIT_BRANCH}"
 fi
 git checkout "${GIT_REMOTE}/${GIT_BRANCH}"
 make distclean ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" || true
 git_rev="$(git log -n1 --format="%h")"
 git_date="$(git show -s --format=%ci "${git_rev}" | perl -ne '/^(\d{4})-(\d{2})-(\d{2})/ && print $1 . $2 . $3')"
-extra_version="-g${git_rev}-${git_date}-p4"
-if [ "$IS_BIS" = 1 ]; then
+extra_version="-g${git_rev}-${git_date}${EXTRA_REV}-${SERIES_ID}"
+if [ "$BIS" = 1 ]; then
   extra_version="${extra_version}-bis"
+fi
+kernel_version="$(make EXTRAVERSION="${extra_version}" ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" kernelversion)"
+if [ -e "${IMAGE_DIR}/bcm2711-kernel-${kernel_version}.tar.xz" ]; then
+  echo "${IMAGE_DIR}/bcm2711-kernel-${kernel_version}.tar.xz exists, not compiling again"
+  exit 0
 fi
 
 echo "Configuring"
 make EXTRAVERSION="${extra_version}" ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" distclean || true
 make EXTRAVERSION="${extra_version}" ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" "${DEFCONFIG}"
 scripts/config --set-str CONFIG_LOCALVERSION ""
-if [ "$IS_BIS" = 1 ]; then
+if [ "$BIS" = 1 ]; then
   echo "Applying -bis changes"
   cp .config .config.defconfig
-  . "${script_dir}/configure-bis"
+  . "${BIS_SCRIPT}"
 fi
 make EXTRAVERSION="${extra_version}" ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" olddefconfig
 
@@ -81,14 +85,14 @@ assemble_dir="$(mktemp -d)"
 mkdir -p "${assemble_dir}" "${assemble_dir}/boot" "${assemble_dir}/boot/overlays"
 make EXTRAVERSION="${extra_version}" ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" INSTALL_MOD_PATH="${assemble_dir}" modules_install
 rm -f "${assemble_dir}/lib/modules"/*/source "${assemble_dir}/lib/modules"/*/build
-cp arch/arm64/boot/Image "${assemble_dir}/boot/kernel8-p4.img"
+cp arch/arm64/boot/Image "${assemble_dir}/boot/kernel8-${SERIES_ID}.img"
 cp COPYING "${assemble_dir}/boot/COPYING.linux"
-cp .config "${assemble_dir}/boot/config-p4"
+cp .config "${assemble_dir}/boot/config-${SERIES_ID}"
 if [ -e .config.defconfig ]; then
-  diff -u .config.defconfig .config >"${assemble_dir}/boot/config-p4-bis.diff" || true
+  diff -u .config.defconfig .config >"${assemble_dir}/boot/config-${SERIES_ID}-bis.diff" || true
 fi
-xz -9 -c <Module.symvers >"${assemble_dir}/boot/Module-p4.symvers.xz"
-xz -9 -c <System.map >"${assemble_dir}/boot/System-p4.map.xz"
+xz -9 -c <Module.symvers >"${assemble_dir}/boot/Module-${SERIES_ID}.symvers.xz"
+xz -9 -c <System.map >"${assemble_dir}/boot/System-${SERIES_ID}.map.xz"
 cp arch/arm64/boot/dts/broadcom/bcm2711-rpi-4-b.dtb "${assemble_dir}/boot/bcm2711-rpi-4-b.dtb"
 base64 -d <<"EOM" | gunzip -c >"${assemble_dir}/boot/armstub8-gic.bin"
 H4sIAJ1SaF4CA9VQsUoDQRScu93iwGYNKQyG3JIfSDojWOwJ/sARSLDJVeInxCpbhPQRey2ChdUV
@@ -98,7 +102,6 @@ miuBnYInYh3/3KyzSGv7ucc20E+e+/gDbI2+jn/rK87WjTFOpdlw5mEBmxvuI5Nm6Q9srnn3KbNE
 dYh4Ce6GMzag8J6d6rvHEIYPYlJDzQP+Ib4BWs0hFgACAAA=
 EOM
 cp arch/arm/boot/dts/overlays/README arch/arm/boot/dts/overlays/*.dtbo "${assemble_dir}/boot/overlays/"
-kernel_version="$(make EXTRAVERSION="${extra_version}" ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" kernelversion)"
 mkdir -p "${IMAGE_DIR}"
 tar Jcvf "${IMAGE_DIR}/bcm2711-kernel-${kernel_version}.tar.xz" --owner=root --group=root -C "${assemble_dir}" .
 
