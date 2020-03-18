@@ -112,7 +112,7 @@ bOHMdof0LfvMSKzTmxb1gAsI/lNt0mfsmQ4VgNLMXlzW1xjQizTnr8D6SEBNtKDV9OTjKYQ1YJ0A
 miuBnYInYh3/3KyzSGv7ucc20E+e+/gDbI2+jn/rK87WjTFOpdlw5mEBmxvuI5Nm6Q9srnn3KbNE
 dYh4Ce6GMzag8J6d6rvHEIYPYlJDzQP+Ib4BWs0hFgACAAA=
 EOM
-elif [ "${TARBALL_BASE}" = "bcmrpi3_defconfig" ]; then
+elif [ "${DEFCONFIG}" = "bcmrpi3_defconfig" ]; then
   cp arch/arm64/boot/dts/broadcom/bcm*-rpi-3-*.dtb "${assemble_dir}/boot/"
 fi
 cp arch/arm/boot/dts/overlays/README arch/arm/boot/dts/overlays/*.dtbo "${assemble_dir}/boot/overlays/"
