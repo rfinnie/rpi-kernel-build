@@ -1,0 +1,2 @@
+# By default, rpi-kernel-build will create a normal 4.19
+# bcm2711_defconfig, so no extra options are needed.
