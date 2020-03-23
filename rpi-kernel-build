@@ -116,6 +116,10 @@ elif [ "${DEFCONFIG}" = "bcmrpi3_defconfig" ]; then
   cp arch/arm64/boot/dts/broadcom/bcm*-rpi-3-*.dtb "${assemble_dir}/boot/"
 fi
 cp arch/arm/boot/dts/overlays/README arch/arm/boot/dts/overlays/*.dtbo "${assemble_dir}/boot/overlays/"
+
+find "${assemble_dir}" -type d -print0 | xargs -0 chmod 0755
+find "${assemble_dir}" -type f -print0 | xargs -0 chmod 0644
+
 mkdir -p "${IMAGE_DIR}"
 tar Jcvf "${IMAGE_DIR}/${TARBALL_BASE}-${kernel_version}.tar.xz" --owner=root --group=root -C "${assemble_dir}" .
 
