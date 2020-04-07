@@ -61,7 +61,7 @@ git checkout "${GIT_REMOTE}/${GIT_BRANCH}"
 make distclean ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" || true
 git_rev="$(git log -n1 --format="%h")"
 git_date="$(git show -s --format=%ci "${git_rev}" | perl -ne '/^(\d{4})-(\d{2})-(\d{2})/ && print $1 . $2 . $3')"
-extra_version="-g${git_rev}-${git_date}${EXTRA_REV}${series_append}"
+extra_version="-${git_date}-g${git_rev}${EXTRA_REV}${series_append}"
 if [ "$BIS" = 1 ]; then
   extra_version="${extra_version}-bis"
 fi
