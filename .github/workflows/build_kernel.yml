@@ -29,7 +29,7 @@ jobs:
     - name: Dependency packages
       run: sudo apt-get -y install build-essential flex bison libssl-dev gcc-aarch64-linux-gnu libc6-dev-arm64-cross
     - name: Build kernel
-      run: env GIT_FETCH=0 GIT_BRANCH=${{ matrix.branch }} IMAGE_DIR=${GITHUB_WORKSPACE}/images CROSS_COMPILE=aarch64-linux-gnu- JOBS=3 ${GITHUB_WORKSPACE}/rpi-kernel-build
+      run: env GIT_FETCH=0 GIT_BRANCH=${{ matrix.branch }} CROSS_COMPILE=aarch64-linux-gnu- JOBS=3 ${GITHUB_WORKSPACE}/rpi-kernel-build
     - name: Upload images
       uses: actions/upload-artifact@v2
       with:
