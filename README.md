@@ -9,7 +9,7 @@ A clone of [raspberrypi/linux](https://github.com/raspberrypi/linux) is needed, 
 You can build directly on an arm64 machine, such as a Raspberry Pi 4 with an arm64 kernel, and kernel builds will take about an hour.  Minimum build environment on a Debian/Ubuntu system should be:
 
 ```
-sudo apt-get install build-essential flex bison openssl-dev
+sudo apt-get install build-essential flex bison libssl-dev
 ```
 
 If you want to cross-compile on an x86-64 system, you also want:

@@ -27,7 +27,7 @@ jobs:
         ref: ${{ matrix.branch }}
         path: linux
     - name: Dependency packages
-      run: sudo apt-get -y install build-essential flex bison gcc-aarch64-linux-gnu libc6-dev-arm64-cross
+      run: sudo apt-get -y install build-essential flex bison libssl-dev gcc-aarch64-linux-gnu libc6-dev-arm64-cross
     - name: Build kernel
       run: env GIT_FETCH=0 GIT_BRANCH=${{ matrix.branch }} IMAGE_DIR=${GITHUB_WORKSPACE}/images CROSS_COMPILE=aarch64-linux-gnu- JOBS=3 ${GITHUB_WORKSPACE}/rpi-kernel-build
     - name: Upload images
