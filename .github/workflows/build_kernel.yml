@@ -1,0 +1,37 @@
+name: build_kernel
+on:
+  push:
+    branches:
+    - main
+    - test
+  pull_request:
+    branches:
+    - main
+    - test
+  schedule:
+  - cron:  '33 8 * * *'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        branch:
+        - rpi-4.19.y
+        - rpi-5.4.y
+        - rpi-5.7.y
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/checkout@v2
+      with:
+        repository: raspberrypi/linux
+        ref: ${{ matrix.branch }}
+        path: linux
+    - name: Dependency packages
+      run: sudo apt-get -y install build-essential flex bison gcc-aarch64-linux-gnu libc6-dev-arm64-cross
+    - name: Build kernel
+      run: env GIT_FETCH=0 GIT_BRANCH=${{ matrix.branch }} IMAGE_DIR=${GITHUB_WORKSPACE}/images CROSS_COMPILE=aarch64-linux-gnu- JOBS=3 ${GITHUB_WORKSPACE}/rpi-kernel-build
+    - name: Upload images
+      uses: actions/upload-artifact@v2
+      with:
+        name: images-${{ github.job }}-${{ github.run_id }}.${{ github.run_number }}-${{ matrix.branch }}
+        path: images/*.tar.xz
