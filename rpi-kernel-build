@@ -36,7 +36,7 @@ fi
 [ -n "${IMAGE_DIR}" ] || IMAGE_DIR="${script_dir}/images"
 [ -n "${CROSS_COMPILE}" ] || CROSS_COMPILE=""
 [ -n "${DEFCONFIG}" ] || DEFCONFIG="bcm2711_defconfig"
-[ -n "${JOBS}" ] || JOBS=4
+[ -n "${JOBS}" ] || JOBS="$(nproc)"
 [ -n "${BIS}" ] || BIS=0
 [ -n "${GIT_FETCH}" ] || GIT_FETCH=1
 [ -n "${BIS_SCRIPT}" ] || BIS_SCRIPT="${script_dir}/bcm2711-kernel-configure-bis"
