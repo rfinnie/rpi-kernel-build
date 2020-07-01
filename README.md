@@ -38,3 +38,15 @@ When run with environment variable ```BIS=1```, rpi-kernel-build produces a kern
 ## Usage
 
 This program produces tarballs which are compatible with sakaki-'s tarball layouts.  [bcm2711-kernel](https://github.com/sakaki-/bcm2711-kernel)'s README.md has a good usage guide for converting a Raspbian installation to use a 64-bit kernel, using with Gentoo, etc.
+
+## Sources
+
+If built with ASSEMBLE_SOURCE=1 (default), a source tarball is also built.  To use, extract it to ```/usr/src/```, install the build prerequisites above, then run:
+
+```
+make -C /lib/modules/$(uname -r)/build prepare
+```
+
+(The kernel tarball's ```/lib/modules/$(uname -r)/build``` is a symlink to ```/usr/src/linux-$(uname -r)```.)
+
+This source tree may be used to build DKMS modules.  An example DKMS module is [hello-dkms](https://github.com/rfinnie/hello-dkms).

@@ -2,7 +2,7 @@
 # bcm2711-kernel-bis, and is compatible with both rpi-4.19.y
 # and rpi-5.4.y.
 
-scripts/config \
+"${GIT_CHECKOUT}/scripts/config" \
   --enable CONFIG_BINFMT_MISC \
   --enable CONFIG_ZSWAP \
   --enable CONFIG_ZPOOL \
