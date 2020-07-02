@@ -33,6 +33,7 @@ fi
 [ -n "${GIT_CHECKOUT}" ] || GIT_CHECKOUT="${script_dir}/linux"
 [ -n "${GIT_REMOTE}" ] || GIT_REMOTE="origin"
 [ -n "${GIT_BRANCH}" ] || GIT_BRANCH="rpi-4.19.y"
+[ -n "${GIT_CHECKOUT_SPEC}" ] || GIT_CHECKOUT_SPEC="${GIT_REMOTE}/${GIT_BRANCH}"
 [ -n "${IMAGE_DIR}" ] || IMAGE_DIR="${script_dir}/images"
 [ -n "${CROSS_COMPILE}" ] || CROSS_COMPILE=""
 [ -n "${DEFCONFIG}" ] || DEFCONFIG="bcm2711_defconfig"
@@ -55,13 +56,11 @@ cd "${work_dir}"
 mkdir -p "${work_dir}/build"
 
 echo "Cleaning and updating repository"
-make -C "${GIT_CHECKOUT}" ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" distclean|| true
-git -C "${GIT_CHECKOUT}" reset --hard
+git -C "${GIT_CHECKOUT}" clean -x -f -f
 if [ "$GIT_FETCH" = 1 ]; then
   git -C "${GIT_CHECKOUT}" fetch "${GIT_REMOTE}" "${GIT_BRANCH}"
 fi
-git -C "${GIT_CHECKOUT}" checkout "${GIT_REMOTE}/${GIT_BRANCH}"
-make -C "${GIT_CHECKOUT}" ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" distclean || true
+git -C "${GIT_CHECKOUT}" checkout "${GIT_CHECKOUT_SPEC}"
 git_rev="$(git -C "${GIT_CHECKOUT}" log -n1 --format="%h")"
 git_date="$(git -C "${GIT_CHECKOUT}" show -s --format=%ci "${git_rev}" | perl -ne '/^(\d{4})-(\d{2})-(\d{2})/ && print $1 . $2 . $3')"
 extra_version="-${git_date}-g${git_rev}${EXTRA_REV}${series_append}"
@@ -135,7 +134,6 @@ if [ "$ASSEMBLE_SOURCE" = 1 ]; then
   echo "Assembling source tarball"
   mkdir -p "${work_dir}/source"
   rsync -a --exclude='.git*' "${GIT_CHECKOUT}/" "${work_dir}/source/linux-${kernel_version}/"
-  rm -f "${work_dir}/source/linux-${kernel_version}"/.config*
   cp "${work_dir}/build/.config" "${work_dir}/source/linux-${kernel_version}/"
   cp "${work_dir}/build/Module.symvers" "${work_dir}/source/linux-${kernel_version}/"
   tar Jcf "${IMAGE_DIR}/${TARBALL_BASE}-source-${kernel_version}.tar.xz" --owner=root --group=root -C "${work_dir}/source" "linux-${kernel_version}"
