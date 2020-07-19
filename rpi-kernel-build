@@ -133,11 +133,12 @@ tar Jcvf "${IMAGE_DIR}/${TARBALL_BASE}-${kernel_version}.tar.xz" --owner=root --
 
 if [ "$ASSEMBLE_SOURCE" = 1 ]; then
   echo "Assembling source tarball"
-  mkdir -p "${work_dir}/source"
-  rsync -a --exclude='.git*' "${GIT_CHECKOUT}/" "${work_dir}/source/linux-${kernel_version}/"
+  mkdir -p "${work_dir}/source/linux-${kernel_version}"
   cp "${work_dir}/build/.config" "${work_dir}/source/linux-${kernel_version}/"
   cp "${work_dir}/build/Module.symvers" "${work_dir}/source/linux-${kernel_version}/"
-  tar Jcf "${IMAGE_DIR}/${TARBALL_BASE}-source-${kernel_version}.tar.xz" --owner=root --group=root -C "${work_dir}/source" "linux-${kernel_version}"
+  tar Jcf "${IMAGE_DIR}/${TARBALL_BASE}-source-${kernel_version}.tar.xz" \
+    --owner=root --group=root --exclude='.git*' --transform='s,^\.,linux-'"${kernel_version}"',g' \
+    -C "${GIT_CHECKOUT}" . -C "${work_dir}/source/linux-${kernel_version}" .
 fi
 
 echo "Cleaning"
