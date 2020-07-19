@@ -41,7 +41,7 @@ fi
 [ -n "${JOBS}" ] || JOBS="$(nproc)"
 [ -n "${BIS}" ] || BIS=0
 [ -n "${GIT_FETCH}" ] || GIT_FETCH=1
-[ -n "${BIS_SCRIPT}" ] || BIS_SCRIPT="${script_dir}/bcm2711-kernel-configure-bis"
+[ -n "${BIS_SCRIPT}" ] || BIS_SCRIPT="${script_dir}/configure-bis"
 [ -n "${EXTRA_REV}" ] || EXTRA_REV=""
 [ -n "${TARBALL_BASE}" ] || TARBALL_BASE="${BASE_CONFIG}-kernel"
 [ -n "${ASSEMBLE_SOURCE}" ] || ASSEMBLE_SOURCE=1
