@@ -1,0 +1,23 @@
+name: ci
+on:
+  push: {}
+  pull_request: {}
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/checkout@v2
+      with:
+        repository: raspberrypi/linux
+        ref: ${{ matrix.branch }}
+        path: linux
+    - name: Dependency packages
+      run: sudo apt-get -y install build-essential flex bison libssl-dev perl rsync gcc-aarch64-linux-gnu libc6-dev-arm64-cross
+    - name: Build kernel
+      run: env GIT_FETCH=0 CROSS_COMPILE=aarch64-linux-gnu- ${GITHUB_WORKSPACE}/rpi-kernel-build
+    - name: Upload images
+      uses: actions/upload-artifact@v2
+      with:
+        name: images-${{ github.job }}-${{ github.run_id }}.${{ github.run_number }}-${{ matrix.branch }}-${{ matrix.defconfig }}
+        path: images/*.tar.xz
