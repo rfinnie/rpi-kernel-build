@@ -36,13 +36,14 @@ fi
 [ -n "${GIT_CHECKOUT_SPEC}" ] || GIT_CHECKOUT_SPEC="${GIT_REMOTE}/${GIT_BRANCH}"
 [ -n "${IMAGE_DIR}" ] || IMAGE_DIR="${script_dir}/images"
 [ -n "${CROSS_COMPILE}" ] || CROSS_COMPILE=""
-[ -n "${DEFCONFIG}" ] || DEFCONFIG="bcm2711_defconfig"
+[ -n "${BASE_CONFIG}" ] || BASE_CONFIG="bcm2711"
+[ -n "${DEFCONFIG}" ] || DEFCONFIG="${BASE_CONFIG}_defconfig"
 [ -n "${JOBS}" ] || JOBS="$(nproc)"
 [ -n "${BIS}" ] || BIS=0
 [ -n "${GIT_FETCH}" ] || GIT_FETCH=1
 [ -n "${BIS_SCRIPT}" ] || BIS_SCRIPT="${script_dir}/bcm2711-kernel-configure-bis"
 [ -n "${EXTRA_REV}" ] || EXTRA_REV=""
-[ -n "${TARBALL_BASE}" ] || TARBALL_BASE="bcm2711-kernel"
+[ -n "${TARBALL_BASE}" ] || TARBALL_BASE="${BASE_CONFIG}-kernel"
 [ -n "${ASSEMBLE_SOURCE}" ] || ASSEMBLE_SOURCE=1
 
 series_append=""
