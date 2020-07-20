@@ -51,7 +51,7 @@ If you want to cross-compile on an x86-64 system, you also want:
 ```
 sudo apt-get install \
   gcc-aarch64-linux-gnu libc6-dev-arm64-cross \
-  gcc-arm-linux-gnueabihf libc6-dev-armhf-cross
+  gcc-arm-linux-gnueabi libc6-dev-armel-cross
 ```
 
 And then set `CROSS_COMPILE=yes` in your rpi-kernel-build.rc config.  On an AMD Ryzen 2700X, kernel builds take about 5 minutes.  (Normally `CROSS_COMPILE` takes a cross compiler prefix such as `CROSS_COMPILE="aarch64-linux-gnu-"`, but `CROSS_COMPILE=yes` is a special case which sets the prefix based on the target architecture.)
