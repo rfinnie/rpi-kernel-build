@@ -1,3 +1,0 @@
-# This will create a RPi 3/3 B+ bcmrpi3_defconfig.
-DEFCONFIG="bcmrpi3_defconfig"
-TARBALL_BASE="bcmrpi3-kernel"

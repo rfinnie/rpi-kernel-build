@@ -1,5 +1,0 @@
-# You can do a -bis kernel via a dedicated RC, but if you're compiling
-# multiple kernels in series, it's perhaps better to use the normal
-# bcm2711-kernel-4.19.rc and pass BIS=1 via env (and optionally
-# GIT_FETCH=0 if you're doing multiple compiles in a row).
-BIS=1

@@ -36,19 +36,34 @@ fi
 [ -n "${GIT_CHECKOUT_SPEC}" ] || GIT_CHECKOUT_SPEC="${GIT_REMOTE}/${GIT_BRANCH}"
 [ -n "${IMAGE_DIR}" ] || IMAGE_DIR="${script_dir}/images"
 [ -n "${CROSS_COMPILE}" ] || CROSS_COMPILE=""
-[ -n "${BASE_CONFIG}" ] || BASE_CONFIG="bcm2711"
-[ -n "${DEFCONFIG}" ] || DEFCONFIG="${BASE_CONFIG}_defconfig"
+[ -n "${ARCH}" ] || ARCH="arm64"
+[ -n "${PLATFORM}" ] || PLATFORM="bcm2711"
+[ -n "${DEFCONFIG}" ] || DEFCONFIG="${PLATFORM}_defconfig"
 [ -n "${JOBS}" ] || JOBS="$(nproc)"
 [ -n "${BIS}" ] || BIS=0
 [ -n "${GIT_FETCH}" ] || GIT_FETCH=1
-[ -n "${BIS_SCRIPT}" ] || BIS_SCRIPT="${script_dir}/configure-bis"
+[ -n "${EXTRA_SCRIPT}" ] || EXTRA_SCRIPT=""
 [ -n "${EXTRA_REV}" ] || EXTRA_REV=""
-[ -n "${TARBALL_BASE}" ] || TARBALL_BASE="${BASE_CONFIG}-kernel"
+[ -n "${TARBALL_BASE}" ] || TARBALL_BASE="rpi-kernel"
 [ -n "${ASSEMBLE_SOURCE}" ] || ASSEMBLE_SOURCE=1
 
-series_append=""
-if [ "${DEFCONFIG}" = "bcm2711_defconfig" ]; then
-  series_append="-p4"
+if [ "${BIS}" = 1 ]; then
+  EXTRA_SCRIPT="${script_dir}/scripts/configure-bis"
+  EXTRA_REV="-bis"
+fi
+
+if [ "${CROSS_COMPILE}" = "yes" ]; then
+  if [ "${ARCH}" = "arm64" ]; then
+    CROSS_COMPILE="aarch64-linux-gnu-"
+  elif [ "${ARCH}" = "arm" ]; then
+    CROSS_COMPILE="arm-linux-gnueabi-"
+  else
+    CROSS_COMPILE=""
+  fi
+fi
+
+if [ -n "${EXTRA_SCRIPT}" ]; then
+  EXTRA_SCRIPT="$(readlink -f "${EXTRA_SCRIPT}")"
 fi
 
 work_dir="$(mktemp -d)"
@@ -64,31 +79,27 @@ fi
 git -C "${GIT_CHECKOUT}" checkout "${GIT_CHECKOUT_SPEC}"
 git_rev="$(git -C "${GIT_CHECKOUT}" log -n1 --format="%h")"
 git_date="$(git -C "${GIT_CHECKOUT}" show -s --format=%ci "${git_rev}" | perl -ne '/^(\d{4})-(\d{2})-(\d{2})/ && print $1 . $2 . $3')"
-extra_version="-${git_date}-g${git_rev}${EXTRA_REV}${series_append}"
-if [ "$BIS" = 1 ]; then
-  extra_version="${extra_version}-bis"
-fi
+extra_version="-${git_date}-g${git_rev}-${ARCH}-${PLATFORM}${EXTRA_REV}"
 
 echo "Configuring"
-make -C "${GIT_CHECKOUT}" ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" distclean || true
-make -C "${GIT_CHECKOUT}" ARCH=arm64 O="${work_dir}/build" CROSS_COMPILE="${CROSS_COMPILE}" "${DEFCONFIG}"
+make -C "${GIT_CHECKOUT}" ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" distclean || true
+make -C "${GIT_CHECKOUT}" ARCH="${ARCH}" O="${work_dir}/build" CROSS_COMPILE="${CROSS_COMPILE}" "${DEFCONFIG}"
 (cd "${work_dir}/build" && "${GIT_CHECKOUT}/scripts/config" --set-str CONFIG_LOCALVERSION "${extra_version}")
-if [ "$BIS" = 1 ]; then
-  echo "Applying -bis changes"
-  cp "${work_dir}/build/.config" "${work_dir}/build/.config.defconfig"
+if [ -n "${EXTRA_SCRIPT}" ]; then
+  echo "Applying ${EXTRA_SCRIPT}"
   (
     cd "${work_dir}/build"
-    export GIT_CHECKOUT
-    . "${BIS_SCRIPT}"
+    export GIT_CHECKOUT ARCH PLATFORM DEFCONFIG CROSS_COMPILE
+    . "${EXTRA_SCRIPT}"
   )
 fi
 # LOCALVERSION="" doesn't override CONFIG_LOCALVERSION above.  It
 # actually appends to it, but more importantly, it supresses "+"
 # version appending.
-make -C "${GIT_CHECKOUT}" LOCALVERSION="" ARCH=arm64 O="${work_dir}/build" CROSS_COMPILE="${CROSS_COMPILE}" olddefconfig
-make -C "${GIT_CHECKOUT}" LOCALVERSION="" ARCH=arm64 O="${work_dir}/build" CROSS_COMPILE="${CROSS_COMPILE}" prepare
+make -C "${GIT_CHECKOUT}" LOCALVERSION="" ARCH="${ARCH}" O="${work_dir}/build" CROSS_COMPILE="${CROSS_COMPILE}" olddefconfig
+make -C "${GIT_CHECKOUT}" LOCALVERSION="" ARCH="${ARCH}" O="${work_dir}/build" CROSS_COMPILE="${CROSS_COMPILE}" prepare
 
-kernel_version="$(make -s -C "${GIT_CHECKOUT}" LOCALVERSION="" ARCH=arm64 O="${work_dir}/build" CROSS_COMPILE="${CROSS_COMPILE}" kernelrelease)"
+kernel_version="$(make -s -C "${GIT_CHECKOUT}" LOCALVERSION="" ARCH="${ARCH}" O="${work_dir}/build" CROSS_COMPILE="${CROSS_COMPILE}" kernelrelease)"
 if [ -e "${IMAGE_DIR}/${TARBALL_BASE}-${kernel_version}.tar.xz" ]; then
   echo "${IMAGE_DIR}/${TARBALL_BASE}-${kernel_version}.tar.xz exists, not compiling again"
   cd /
@@ -97,22 +108,17 @@ if [ -e "${IMAGE_DIR}/${TARBALL_BASE}-${kernel_version}.tar.xz" ]; then
 fi
 
 echo "Compiling"
-make -C "${GIT_CHECKOUT}" LOCALVERSION="" ARCH=arm64 O="${work_dir}/build" CROSS_COMPILE="${CROSS_COMPILE}" -j${JOBS}
+make -C "${GIT_CHECKOUT}" LOCALVERSION="" ARCH="${ARCH}" O="${work_dir}/build" CROSS_COMPILE="${CROSS_COMPILE}" -j${JOBS}
 
 echo "Assembling tarball"
 mkdir -p "${work_dir}/destdir/boot/overlays"
-make -C "${GIT_CHECKOUT}" LOCALVERSION="" ARCH=arm64 O="${work_dir}/build" CROSS_COMPILE="${CROSS_COMPILE}" INSTALL_MOD_PATH="${work_dir}/destdir" modules_install
+make -C "${GIT_CHECKOUT}" LOCALVERSION="" ARCH="${ARCH}" O="${work_dir}/build" CROSS_COMPILE="${CROSS_COMPILE}" INSTALL_MOD_PATH="${work_dir}/destdir" modules_install
 rm -f "${work_dir}/destdir/lib/modules/${kernel_version}/source" "${work_dir}/destdir/lib/modules/${kernel_version}/build"
 ln -sf "/usr/src/linux-${kernel_version}" "${work_dir}/destdir/lib/modules/${kernel_version}/build"
-cp "${work_dir}/build/arch/arm64/boot/Image" "${work_dir}/destdir/boot/kernel8${series_append}.img"
-cp "${GIT_CHECKOUT}/COPYING" "${work_dir}/destdir/boot/COPYING.linux"
-cp "${work_dir}/build/.config" "${work_dir}/destdir/boot/config${series_append}"
-if [ -e "${work_dir}/build/.config.defconfig" ]; then
-  (cd "${work_dir}/build" && diff -u .config.defconfig .config) >"${work_dir}/destdir/boot/config${series_append}-bis.diff" || true
-fi
-xz -9 -c <"${work_dir}/build/System.map" >"${work_dir}/destdir/boot/System${series_append}.map.xz"
-if [ "${DEFCONFIG}" = "bcm2711_defconfig" ]; then
-  cp "${work_dir}/build/arch/arm64/boot/dts/broadcom"/bcm*-rpi-4-*.dtb "${work_dir}/destdir/boot/"
+cp "${work_dir}/build/arch/${ARCH}/boot/Image" "${work_dir}/destdir/boot/kernel.img-${ARCH}-${PLATFORM}"
+cp "${work_dir}/build/.config" "${work_dir}/destdir/boot/config-${ARCH}-${PLATFORM}"
+cp "${work_dir}/build/System.map" "${work_dir}/destdir/boot/System.map-${ARCH}-${PLATFORM}"
+if [ "${PLATFORM}" = "bcm2711" ]; then
   base64 -d <<"EOM" | gunzip -c >"${work_dir}/destdir/boot/armstub8-gic.bin"
 H4sIAJ1SaF4CA9VQsUoDQRScu93iwGYNKQyG3JIfSDojWOwJ/sARSLDJVeInxCpbhPQRey2ChdUV
 QbxKBfUDFt7VW1lrKm1cH1Z+gI0Dj3nz5hXD4O3epUAVocyjBJUp9ymT1gHRjSlbBIkx/C7NfJv8
@@ -120,16 +126,20 @@ bOHMdof0LfvMSKzTmxb1gAsI/lNt0mfsmQ4VgNLMXlzW1xjQizTnr8D6SEBNtKDV9OTjKYQ1YJ0A
 miuBnYInYh3/3KyzSGv7ucc20E+e+/gDbI2+jn/rK87WjTFOpdlw5mEBmxvuI5Nm6Q9srnn3KbNE
 dYh4Ce6GMzag8J6d6rvHEIYPYlJDzQP+Ib4BWs0hFgACAAA=
 EOM
-elif [ "${DEFCONFIG}" = "bcmrpi3_defconfig" ]; then
-  cp "${work_dir}/build/arch/arm64/boot/dts/broadcom"/bcm*-rpi-3-*.dtb "${work_dir}/destdir/boot/"
 fi
-cp "${GIT_CHECKOUT}/arch/arm/boot/dts/overlays/README" "${work_dir}/build/arch/arm64/boot/dts/overlays"/*.dtb* "${work_dir}/destdir/boot/overlays/"
+if [ -d "${work_dir}/build/arch/${ARCH}/boot/dts/broadcom" ]; then
+  dtsdir="${work_dir}/build/arch/${ARCH}/boot/dts/broadcom"
+else
+  dtsdir="${work_dir}/build/arch/${ARCH}/boot/dts"
+fi
+cp "${dtsdir}"/bcm*-rpi*.dtb "${work_dir}/destdir/boot/"
+cp "${GIT_CHECKOUT}/arch/arm/boot/dts/overlays/README" "${work_dir}/build/arch/${ARCH}/boot/dts/overlays"/*.dtb* "${work_dir}/destdir/boot/overlays/"
 
 find "${work_dir}/destdir" -type d -print0 | xargs -0 chmod 0755
 find "${work_dir}/destdir" -type f -print0 | xargs -0 chmod 0644
 
 mkdir -p "${IMAGE_DIR}"
-tar Jcvf "${IMAGE_DIR}/${TARBALL_BASE}-${kernel_version}.tar.xz" --owner=root --group=root -C "${work_dir}/destdir" .
+tar Jcf "${IMAGE_DIR}/${TARBALL_BASE}-${kernel_version}.tar.xz" --owner=root --group=root -C "${work_dir}/destdir" .
 
 if [ "$ASSEMBLE_SOURCE" = 1 ]; then
   echo "Assembling source tarball"

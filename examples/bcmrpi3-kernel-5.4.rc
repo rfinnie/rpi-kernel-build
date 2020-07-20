@@ -1,3 +1,0 @@
-GIT_BRANCH="rpi-5.4.y"
-DEFCONFIG="bcmrpi3_defconfig"
-TARBALL_BASE="bcmrpi3-kernel"

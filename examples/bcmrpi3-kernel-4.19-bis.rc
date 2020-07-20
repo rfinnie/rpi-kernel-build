@@ -1,6 +1,0 @@
-# /!\ WARNING /!\
-# bcm2711-kernel-configure-bis does not yet exist; needs to be ported from
-# https://github.com/sakaki-/bcmrpi3-kernel-bis/blob/master/vs_bcmrpi3_config.diff
-DEFCONFIG="bcmrpi3_defconfig"
-TARBALL_BASE="bcmrpi3-kernel"
-BIS_SCRIPT="/path/to/bcm2711-kernel-configure-bis"
