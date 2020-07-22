@@ -117,7 +117,6 @@ rm -f "${work_dir}/destdir/lib/modules/${kernel_version}/source" "${work_dir}/de
 ln -sf "/usr/src/linux-${kernel_version}" "${work_dir}/destdir/lib/modules/${kernel_version}/build"
 cp "${work_dir}/build/arch/${ARCH}/boot/Image" "${work_dir}/destdir/boot/kernel.img-${ARCH}-${PLATFORM}"
 cp "${work_dir}/build/.config" "${work_dir}/destdir/boot/config-${ARCH}-${PLATFORM}"
-cp "${work_dir}/build/System.map" "${work_dir}/destdir/boot/System.map-${ARCH}-${PLATFORM}"
 if [ "${PLATFORM}" = "bcm2711" ]; then
   base64 -d <<"EOM" | gunzip -c >"${work_dir}/destdir/boot/armstub8-gic.bin"
 H4sIAJ1SaF4CA9VQsUoDQRScu93iwGYNKQyG3JIfSDojWOwJ/sARSLDJVeInxCpbhPQRey2ChdUV
@@ -145,6 +144,7 @@ if [ "$ASSEMBLE_SOURCE" = 1 ]; then
   echo "Assembling source tarball"
   mkdir -p "${work_dir}/source/linux-${kernel_version}"
   cp "${work_dir}/build/.config" "${work_dir}/source/linux-${kernel_version}/"
+  cp "${work_dir}/build/System.map" "${work_dir}/source/linux-${kernel_version}/"
   cp "${work_dir}/build/Module.symvers" "${work_dir}/source/linux-${kernel_version}/"
   tar Jcf "${IMAGE_DIR}/${TARBALL_BASE}-source-${kernel_version}.tar.xz" \
     --owner=root --group=root --exclude='.git*' --transform='s,^\.,linux-'"${kernel_version}"',g' \
