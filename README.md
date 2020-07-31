@@ -1,6 +1,6 @@
 # rpi-kernel-build
 
-rpi-kernel-build is a script which builds Raspberry Pi kernel tarballs.  It was originally built as a pseudo-fork of [sakaki-](https://github.com/sakaki-)'s kernel builds to build Raspberry Pi 4 64-bit kernels, but is currently capable of building all variants: 32-bit or 64-bit, bcm2709/bcm2711/bcmrpi/bcmrpi3, multiple tracked upstream branches (e.g. rpi-4.19.y, rpi-5.4.y, rpi-5.7.y), and feature-enhanced config patches.
+rpi-kernel-build is a script which builds Raspberry Pi kernel tarballs.  It was originally built as a pseudo-fork of [sakaki-](https://github.com/sakaki-)'s kernel builds to build Raspberry Pi 4 64-bit kernels, but is currently capable of building all variants: 32-bit or 64-bit, bcm2709/bcm2711/bcmrpi/bcmrpi3, multiple tracked upstream branches (e.g. rpi-5.4.y, rpi-5.8.y), and feature-enhanced config patches.
 
 ## Binary images
 
@@ -8,7 +8,7 @@ There is a [scheduled weekly GitHub workflow](https://github.com/rfinnie/rpi-ker
 
 * Architecture: `arm` (32-bit) or `arm64` (64-bit).  Note that a 64-bit kernel will work with a 32-bit userland provided by Raspberry Pi OS (on 64-bit CPUs that is; Raspberry Pi 3 and later).
 * Platform: `bcmrpi` (Raspberry Pi 0/1/2), `bcm2709`/`bcmrpi3` (Raspberry Pi 3), `bcm2711` (Raspberry Pi 4).  Note that the Raspberry Pi 3 platform is called `bcm2709` for `arm` (32-bit) kernels, but `bcmrpi3` for `arm64` (64-bit) kernels, but are otherwise the same platform.
-* Branch: `rpi-4.19.y` is the current branch which Raspberry Pi itself builds.  `rpi-5.4.y` is the latest LTS branch from kernel.org.  As of this writing, `rpi-5.7.y` is the latest overall branch.
+* Branch: `rpi-5.4.y` is the current branch which Raspberry Pi itself builds, and is the latest LTS branch from kernel.org.  As of this writing, `rpi-5.8.y` is the latest overall branch.
 * Bis: Same as their non-bis releases, but with a few extra kernel config features enabled. ("Bis" is Latin for second, secondary, etc.)
 
 ## Installation
