@@ -13,7 +13,9 @@ jobs:
         ref: rpi-5.4.y
         path: linux
     - name: Dependency packages
-      run: sudo apt-get -y install build-essential flex bison libssl-dev perl rsync gcc-aarch64-linux-gnu libc6-dev-arm64-cross
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install build-essential flex bison libssl-dev perl rsync gcc-aarch64-linux-gnu libc6-dev-arm64-cross
     - name: Build kernel
       run: env GIT_FETCH=0 GIT_BRANCH=rpi-5.4.y PLATFORM=bcm2711 CROSS_COMPILE=yes ${GITHUB_WORKSPACE}/rpi-kernel-build
     - name: Upload images
