@@ -13,7 +13,7 @@ jobs:
         - arm64
         branch:
         - rpi-5.4.y
-        - rpi-5.8.y
+        - rpi-5.10.y
         platform:
         - bcm2709
         - bcm2711
