@@ -32,7 +32,7 @@ fi
 
 [ -n "${GIT_CHECKOUT}" ] || GIT_CHECKOUT="${script_dir}/linux"
 [ -n "${GIT_REMOTE}" ] || GIT_REMOTE="origin"
-[ -n "${GIT_BRANCH}" ] || GIT_BRANCH="rpi-5.4.y"
+[ -n "${GIT_BRANCH}" ] || GIT_BRANCH="rpi-5.10.y"
 [ -n "${GIT_CHECKOUT_SPEC}" ] || GIT_CHECKOUT_SPEC="${GIT_REMOTE}/${GIT_BRANCH}"
 [ -n "${IMAGE_DIR}" ] || IMAGE_DIR="${script_dir}/images"
 [ -n "${CROSS_COMPILE}" ] || CROSS_COMPILE=""
