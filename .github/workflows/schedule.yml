@@ -23,6 +23,13 @@ jobs:
         bis:
         - '0'
         - '1'
+        exclude:
+        - arch: arm
+          platform: bcmrpi3
+        - arch: arm64
+          platform: bcm2709
+        - arch: arm64
+          platform: bcmrpi
     steps:
     - uses: actions/checkout@v2
     - uses: actions/checkout@v2
@@ -35,10 +42,9 @@ jobs:
         sudo apt-get update
         sudo apt-get -y install build-essential flex bison libssl-dev perl rsync gcc-aarch64-linux-gnu libc6-dev-arm64-cross gcc-arm-linux-gnueabi libc6-dev-armel-cross
     - name: Build kernel
-      run: env GIT_FETCH=0 ARCH=${{ matrix.arch }} GIT_BRANCH=${{ matrix.branch }} PLATFORM=${{ matrix.platform }} BIS=${{ matrix.bis }} CROSS_COMPILE=yes ${GITHUB_WORKSPACE}/.github/bin/matrix-helper ${GITHUB_WORKSPACE}/rpi-kernel-build
+      run: env GIT_FETCH=0 ARCH=${{ matrix.arch }} GIT_BRANCH=${{ matrix.branch }} PLATFORM=${{ matrix.platform }} BIS=${{ matrix.bis }} CROSS_COMPILE=yes ${GITHUB_WORKSPACE}/rpi-kernel-build
     - name: Upload images
       uses: actions/upload-artifact@v2
       with:
         name: images-${{ github.job }}-${{ github.run_id }}.${{ github.run_number }}-${{ matrix.arch }}-${{ matrix.branch }}-${{ matrix.platform }}-bis${{ matrix.bis }}
         path: images/*.tar.xz
-        if-no-files-found: ignore
