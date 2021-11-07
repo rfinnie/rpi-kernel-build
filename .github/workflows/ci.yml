@@ -23,3 +23,4 @@ jobs:
       with:
         name: images-${{ github.job }}-${{ github.run_id }}.${{ github.run_number }}-rpi-5.10.y-bcm2711
         path: images/*.tar.xz
+        retention-days: 10

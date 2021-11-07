@@ -48,3 +48,4 @@ jobs:
       with:
         name: images-${{ github.job }}-${{ github.run_id }}.${{ github.run_number }}-${{ matrix.arch }}-${{ matrix.branch }}-${{ matrix.platform }}-bis${{ matrix.bis }}
         path: images/*.tar.xz
+        retention-days: 25
