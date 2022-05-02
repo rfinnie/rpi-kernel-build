@@ -5,6 +5,7 @@ on:
   workflow_dispatch:
 jobs:
   build:
+    name: Build kernel (${{ matrix.arch }}, ${{ matrix.branch }}, ${{ matrix.platform }}, bis${{ matrix.bis }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -13,8 +14,8 @@ jobs:
         - arm
         - arm64
         branch:
-        - rpi-5.4.y
         - rpi-5.10.y
+        - rpi-5.15.y
         platform:
         - bcm2709
         - bcm2711
