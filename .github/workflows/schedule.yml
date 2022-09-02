@@ -14,7 +14,6 @@ jobs:
         - arm
         - arm64
         branch:
-        - rpi-5.10.y
         - rpi-5.15.y
         platform:
         - bcm2709
