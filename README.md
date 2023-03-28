@@ -9,15 +9,14 @@ There is a [scheduled weekly GitHub workflow](https://github.com/rfinnie/rpi-ker
 * Architecture: `arm` (32-bit) or `arm64` (64-bit).  Note that a 64-bit kernel will work with a 32-bit userland provided by Raspberry Pi OS (on 64-bit CPUs that is; Raspberry Pi 3 and later).
 * Platform: `bcmrpi` (Raspberry Pi 0/1/2), `bcm2709`/`bcmrpi3` (Raspberry Pi 3), `bcm2711` (Raspberry Pi 4).  Note that the Raspberry Pi 3 platform is called `bcm2709` for `arm` (32-bit) kernels, but `bcmrpi3` for `arm64` (64-bit) kernels, but are otherwise the same platform.
 * Branch: `rpi-5.15.y` LTS branch is being built.
-* Bis: Same as their non-bis releases, but with a few extra kernel config features enabled. ("Bis" is Latin for second, secondary, etc.)
 
 ## Installation
 
-Download the desired tarball, understanding the options above.  For this example, we'll assume `bcm2711` (Raspberry Pi 4), `arm64`, `rpi-5.4-y`, no bis (Raspberry Pi-developer kernel config).
+Download the desired tarball, understanding the options above.  For this example, we'll assume `bcm2711` (Raspberry Pi 4), `arm64`, `rpi-5.4-y`.
 
 Unfortunately, GitHub actions wrap the build artifacts in a zip file, so it will need to be unzipped to get the tarball:
 ```
-$ unzip images-build-174991421.2-rpi-5.4.y-bcm2711-bis0.zip
+$ unzip images-build-174991421.2-rpi-5.4.y-bcm2711.zip
 ```
 
 Then, extract the resulting tarball to the root directory of the Raspberry Pi OS installation:

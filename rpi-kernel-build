@@ -26,17 +26,11 @@ fi
 [ -n "${PLATFORM}" ] || PLATFORM="bcm2711"
 [ -n "${DEFCONFIG}" ] || DEFCONFIG="${PLATFORM}_defconfig"
 [ -n "${JOBS}" ] || JOBS="$(nproc)"
-[ -n "${BIS}" ] || BIS=0
 [ -n "${GIT_FETCH}" ] || GIT_FETCH=1
 [ -n "${EXTRA_SCRIPT}" ] || EXTRA_SCRIPT=""
 [ -n "${EXTRA_REV}" ] || EXTRA_REV=""
 [ -n "${TARBALL_BASE}" ] || TARBALL_BASE="rpi-kernel"
 [ -n "${ASSEMBLE_SOURCE}" ] || ASSEMBLE_SOURCE=1
-
-if [ "${BIS}" = 1 ]; then
-  EXTRA_SCRIPT="${script_dir}/scripts/configure-bis"
-  EXTRA_REV="-bis"
-fi
 
 if [ "${CROSS_COMPILE}" = "yes" ]; then
   if [ "${ARCH}" = "arm64" ]; then
