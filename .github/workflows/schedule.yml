@@ -29,8 +29,8 @@ jobs:
         - arch: arm64
           platform: bcmrpi
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
       with:
         repository: raspberrypi/linux
         ref: ${{ matrix.branch }}
@@ -42,8 +42,9 @@ jobs:
     - name: Build kernel
       run: env GIT_FETCH=0 ARCH=${{ matrix.arch }} GIT_BRANCH=${{ matrix.branch }} PLATFORM=${{ matrix.platform }} CROSS_COMPILE=yes ${GITHUB_WORKSPACE}/rpi-kernel-build
     - name: Upload images
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: images-${{ github.job }}-${{ github.run_id }}.${{ github.run_number }}-${{ matrix.arch }}-${{ matrix.branch }}-${{ matrix.platform }}
         path: images/*.tar.xz
         retention-days: 25
+        include-hidden-files: true
