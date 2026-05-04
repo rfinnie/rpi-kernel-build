@@ -1,19 +1,23 @@
 #!/bin/sh
 
-# rpi-kernel-build
-# Copyright (C) 2020-2021 Ryan Finnie
+# SPDX-PackageName: rpi-kernel-build
+# SPDX-PackageSupplier: Ryan Finnie <ryan@finnie.org>
+# SPDX-PackageDownloadLocation: https://codeberg.org/rfinnie/rpi-kernel-build
+# SPDX-FileCopyrightText: © 2020 Ryan Finnie <ryan@finnie.org>
 # SPDX-License-Identifier: MPL-2.0
 
 set -e
 
 script_dir="$(dirname "$(readlink -f "$0")")"
 if [ -z "${RC_FILE}" ]; then
-  if [ -e "${script_dir}/rpi-kernel-build.rc" ]; then
-    RC_FILE="${script_dir}/rpi-kernel-build.rc"
-  fi
+    if [ -e "${script_dir}/rpi-kernel-build.rc" ]; then
+        RC_FILE="${script_dir}/rpi-kernel-build.rc"
+    fi
 fi
 if [ -n "${RC_FILE}" ]; then
-  . "${RC_FILE}"
+    # (SC1090) ShellCheck can't follow non-constant source.
+    # shellcheck disable=SC1090
+    . "${RC_FILE}"
 fi
 
 [ -n "${GIT_CHECKOUT}" ] || GIT_CHECKOUT="${script_dir}/linux"
@@ -33,17 +37,17 @@ fi
 [ -n "${ASSEMBLE_SOURCE}" ] || ASSEMBLE_SOURCE=1
 
 if [ "${CROSS_COMPILE}" = "yes" ]; then
-  if [ "${ARCH}" = "arm64" ]; then
-    CROSS_COMPILE="aarch64-linux-gnu-"
-  elif [ "${ARCH}" = "arm" ]; then
-    CROSS_COMPILE="arm-linux-gnueabi-"
-  else
-    CROSS_COMPILE=""
-  fi
+    if [ "${ARCH}" = "arm64" ]; then
+        CROSS_COMPILE="aarch64-linux-gnu-"
+    elif [ "${ARCH}" = "arm" ]; then
+        CROSS_COMPILE="arm-linux-gnueabi-"
+    else
+        CROSS_COMPILE=""
+    fi
 fi
 
 if [ -n "${EXTRA_SCRIPT}" ]; then
-  EXTRA_SCRIPT="$(readlink -f "${EXTRA_SCRIPT}")"
+    EXTRA_SCRIPT="$(readlink -f "${EXTRA_SCRIPT}")"
 fi
 
 work_dir="$(mktemp -d)"
@@ -54,7 +58,7 @@ mkdir -p "${work_dir}/build"
 echo "Cleaning and updating repository"
 git -C "${GIT_CHECKOUT}" clean -x -f -f
 if [ "$GIT_FETCH" = 1 ]; then
-  git -C "${GIT_CHECKOUT}" fetch "${GIT_REMOTE}" "${GIT_BRANCH}"
+    git -C "${GIT_CHECKOUT}" fetch "${GIT_REMOTE}" "${GIT_BRANCH}"
 fi
 git -C "${GIT_CHECKOUT}" checkout "${GIT_CHECKOUT_SPEC}"
 git_rev="$(git -C "${GIT_CHECKOUT}" log -n1 --format="%h")"
@@ -66,12 +70,14 @@ make -C "${GIT_CHECKOUT}" ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" distcl
 make -C "${GIT_CHECKOUT}" ARCH="${ARCH}" O="${work_dir}/build" CROSS_COMPILE="${CROSS_COMPILE}" "${DEFCONFIG}"
 (cd "${work_dir}/build" && "${GIT_CHECKOUT}/scripts/config" --set-str CONFIG_LOCALVERSION "${extra_version}")
 if [ -n "${EXTRA_SCRIPT}" ]; then
-  echo "Applying ${EXTRA_SCRIPT}"
-  (
-    cd "${work_dir}/build"
-    export GIT_CHECKOUT ARCH PLATFORM DEFCONFIG CROSS_COMPILE
-    . "${EXTRA_SCRIPT}"
-  )
+    echo "Applying ${EXTRA_SCRIPT}"
+    (
+        cd "${work_dir}/build"
+        export GIT_CHECKOUT ARCH PLATFORM DEFCONFIG CROSS_COMPILE
+        # (SC1090) ShellCheck can't follow non-constant source.
+        # shellcheck disable=SC1090
+        . "${EXTRA_SCRIPT}"
+    )
 fi
 # LOCALVERSION="" doesn't override CONFIG_LOCALVERSION above.  It
 # actually appends to it, but more importantly, it supresses "+"
@@ -81,14 +87,14 @@ make -C "${GIT_CHECKOUT}" LOCALVERSION="" ARCH="${ARCH}" O="${work_dir}/build" C
 
 kernel_version="$(make -s -C "${GIT_CHECKOUT}" LOCALVERSION="" ARCH="${ARCH}" O="${work_dir}/build" CROSS_COMPILE="${CROSS_COMPILE}" kernelrelease)"
 if [ -e "${IMAGE_DIR}/${TARBALL_BASE}-${kernel_version}.tar.xz" ]; then
-  echo "${IMAGE_DIR}/${TARBALL_BASE}-${kernel_version}.tar.xz exists, not compiling again"
-  cd /
-  rm -rf "${work_dir}"
-  exit 0
+    echo "${IMAGE_DIR}/${TARBALL_BASE}-${kernel_version}.tar.xz exists, not compiling again"
+    cd /
+    rm -rf "${work_dir}"
+    exit 0
 fi
 
 echo "Compiling"
-make -C "${GIT_CHECKOUT}" LOCALVERSION="" ARCH="${ARCH}" O="${work_dir}/build" CROSS_COMPILE="${CROSS_COMPILE}" -j${JOBS}
+make -C "${GIT_CHECKOUT}" LOCALVERSION="" ARCH="${ARCH}" O="${work_dir}/build" CROSS_COMPILE="${CROSS_COMPILE}" "-j${JOBS}"
 
 echo "Assembling tarball"
 mkdir -p "${work_dir}/destdir/boot/overlays"
@@ -98,9 +104,9 @@ ln -sf "/usr/src/linux-${kernel_version}" "${work_dir}/destdir/lib/modules/${ker
 cp "${work_dir}/build/arch/${ARCH}/boot/Image" "${work_dir}/destdir/boot/kernel.img-${ARCH}-${PLATFORM}"
 cp "${work_dir}/build/.config" "${work_dir}/destdir/boot/config-${ARCH}-${PLATFORM}"
 if [ -d "${work_dir}/build/arch/${ARCH}/boot/dts/broadcom" ]; then
-  dtsdir="${work_dir}/build/arch/${ARCH}/boot/dts/broadcom"
+    dtsdir="${work_dir}/build/arch/${ARCH}/boot/dts/broadcom"
 else
-  dtsdir="${work_dir}/build/arch/${ARCH}/boot/dts"
+    dtsdir="${work_dir}/build/arch/${ARCH}/boot/dts"
 fi
 cp "${dtsdir}"/bcm*-rpi*.dtb "${work_dir}/destdir/boot/"
 cp "${GIT_CHECKOUT}/arch/arm/boot/dts/overlays/README" "${work_dir}/build/arch/${ARCH}/boot/dts/overlays"/*.dtb* "${work_dir}/destdir/boot/overlays/"
@@ -112,14 +118,14 @@ mkdir -p "${IMAGE_DIR}"
 tar Jcf "${IMAGE_DIR}/${TARBALL_BASE}-${kernel_version}.tar.xz" --owner=root --group=root -C "${work_dir}/destdir" .
 
 if [ "$ASSEMBLE_SOURCE" = 1 ]; then
-  echo "Assembling source tarball"
-  mkdir -p "${work_dir}/source/linux-${kernel_version}"
-  cp "${work_dir}/build/.config" "${work_dir}/source/linux-${kernel_version}/"
-  cp "${work_dir}/build/System.map" "${work_dir}/source/linux-${kernel_version}/"
-  cp "${work_dir}/build/Module.symvers" "${work_dir}/source/linux-${kernel_version}/"
-  tar Jcf "${IMAGE_DIR}/${TARBALL_BASE}-source-${kernel_version}.tar.xz" \
-    --owner=root --group=root --exclude='.git*' --transform='s,^\.,linux-'"${kernel_version}"',g' \
-    -C "${GIT_CHECKOUT}" . -C "${work_dir}/source/linux-${kernel_version}" .
+    echo "Assembling source tarball"
+    mkdir -p "${work_dir}/source/linux-${kernel_version}"
+    cp "${work_dir}/build/.config" "${work_dir}/source/linux-${kernel_version}/"
+    cp "${work_dir}/build/System.map" "${work_dir}/source/linux-${kernel_version}/"
+    cp "${work_dir}/build/Module.symvers" "${work_dir}/source/linux-${kernel_version}/"
+    tar Jcf "${IMAGE_DIR}/${TARBALL_BASE}-source-${kernel_version}.tar.xz" \
+        --owner=root --group=root --exclude='.git*' --transform='s,^\.,linux-'"${kernel_version}"',g' \
+        -C "${GIT_CHECKOUT}" . -C "${work_dir}/source/linux-${kernel_version}" .
 fi
 
 echo "Cleaning"

@@ -1,0 +1,71 @@
+# SPDX-PackageName: rpi-kernel-build
+# SPDX-PackageSupplier: Ryan Finnie <ryan@finnie.org>
+# SPDX-PackageDownloadLocation: https://codeberg.org/rfinnie/rpi-kernel-build
+# SPDX-FileComment: Woodpecker CI workflow
+# SPDX-FileCopyrightText: © 2026 Ryan Finnie <ryan@finnie.org>
+# SPDX-License-Identifier: MPL-2.0
+---
+when:
+  - event: ["manual", "cron"]
+    cron: "weekly"
+labels:
+  platform: "linux/amd64"
+steps:
+  - name: "Weekly build"
+    image: "debian"
+    commands: |
+      apt update
+      apt -y install git build-essential bc flex bison libssl-dev perl rsync kmod \
+        gcc-aarch64-linux-gnu libc6-dev-arm64-cross \
+        gcc-arm-linux-gnueabi libc6-dev-armel-cross
+
+      git clone --depth=1 --no-tags --branch=rpi-6.18.y https://github.com/raspberrypi/linux linux
+
+      do_build() {
+        git_branch="$1"
+        arch="$2"
+        platform="$3"
+        echo
+        echo "=== Build: $${git_branch}, $${arch}, $${platform} ==="
+        echo
+        env JOBS=8 GIT_FETCH=0 ARCH="$${arch}" GIT_BRANCH="$${git_branch}" PLATFORM="$${platform}" CROSS_COMPILE=yes ./rpi-kernel-build
+      }
+
+      ret=0
+      do_build rpi-6.18.y arm bcm2709 || ret=$?
+      do_build rpi-6.18.y arm bcm2835 || ret=$?
+      do_build rpi-6.18.y arm bcmrpi || ret=$?
+      do_build rpi-6.18.y arm64 bcm2711 || ret=$?
+      do_build rpi-6.18.y arm64 bcm2712 || ret=$?
+
+      mkdir -p .artifacts-dist
+      mv images/*.tar.xz .artifacts-dist/
+      exit $ret
+  - name: "Upload artifacts"
+    image: "woodpeckerci/plugin-s3"
+    settings:
+      endpoint: "http://nibbler.snowman.lan:3900"
+      path_style: true
+      region: "garage"
+      bucket: "ci-artifacts"
+      access_key:
+        from_secret: "garage_access_key"
+      secret_key:
+        from_secret: "garage_secret_key"
+      source: ".artifacts-dist/*"
+      strip_prefix: ".artifacts-dist/"
+      target: "/"
+  - name: "Notify Mastodon if failure"
+    when:
+      - status: ["failure"]
+    image: "woodpeckerci/plugin-mastodon-post"
+    settings:
+      server_url: "https://m29.us"
+      access_token:
+        from_secret: "m29_token"
+      status: |
+        🪿 🪿 🪿 FAILURE: {{ CI_REPO }} 🪿 🪿 🪿
+        Workflow: {{ CI_WORKFLOW_NAME }} ({{ CI_PIPELINE_EVENT }} on {{ CI_COMMIT_REF }})
+
+        Pipeline: {{ CI_PIPELINE_URL }}
+        Commit: {{ CI_PIPELINE_FORGE_URL }}

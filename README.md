@@ -66,3 +66,14 @@ make -C /lib/modules/$(uname -r)/build prepare
 (The kernel tarball's `/lib/modules/$(uname -r)/build` is a symlink to `/usr/src/linux-$(uname -r)`.)
 
 This source tree may be used to build DKMS modules.  An example DKMS module is [hello-dkms](https://github.com/rfinnie/hello-dkms).
+
+## License
+
+This document is provided under the following license:
+
+    SPDX-PackageName: rpi-kernel-build
+    SPDX-PackageSupplier: Ryan Finnie <ryan@finnie.org>
+    SPDX-PackageDownloadLocation: https://codeberg.org/rfinnie/rpi-kernel-build
+    SPDX-FileComment: README
+    SPDX-FileCopyrightText: SPDX-FileCopyrightText: © 2020 Ryan Finnie <ryan@finnie.org>
+    SPDX-License-Identifier: CC-BY-SA-4.0
