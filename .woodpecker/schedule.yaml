@@ -41,7 +41,7 @@ steps:
 
       for fn in images/*.tar.xz; do
           artifact_fn="$(basename "$${fn}")"
-          curl -v --fail-with-body -T "$${fn}" -H "Authorization: Basic $${ASSETS_AUTH}" "http://artifacts.snowman.lan/$${artifact_fn}"
+          curl --fail-with-body -T "$${fn}" -H "Authorization: Basic $${ASSETS_AUTH}" "http://artifacts.snowman.lan/$${artifact_fn}"
       done
       exit $ret
     environment:
