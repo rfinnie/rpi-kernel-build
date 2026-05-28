@@ -1,5 +1,8 @@
 # rpi-kernel-build
 
+[![Git forge repository](https://img.shields.io/badge/git-forge-orange?logo=forgejo)](https://forge.colobox.com/rfinnie/rpi-kernel-build)
+[![CI pipeline status](https://woodpecker.colobox.com/api/badges/55/status.svg)](https://woodpecker.colobox.com/repos/55)
+
 rpi-kernel-build is a script which builds Raspberry Pi kernel tarballs.  It was originally built as a pseudo-fork of [sakaki-](https://github.com/sakaki-)'s kernel builds to build Raspberry Pi 4 64-bit kernels, but is currently capable of building all variants: 32-bit or 64-bit, bcm2709/bcm2711/bcmrpi/bcmrpi3, multiple tracked upstream branches (e.g. rpi-5.10.y, rpi-5.15.y), and feature-enhanced config patches.
 
 ## Binary images
